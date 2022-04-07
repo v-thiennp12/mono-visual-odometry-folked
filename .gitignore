@@ -1,0 +1,4 @@
+images/
+__pycache__/
+data_odometry_gray/
+data_odometry_poses/
