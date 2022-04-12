@@ -116,9 +116,13 @@ class MonoVideoOdometery(object):
             _, R, t, _ = cv2.recoverPose(E, self.good_old, self.good_new, self.R.copy(), self.t.copy(), focal=self.focal, pp=self.pp, mask=None)
 
             absolute_scale = self.get_absolute_scale()
-            if (absolute_scale > 0.1 and abs(t[2][0]) > abs(t[0][0]) and abs(t[2][0]) > abs(t[1][0])):
-                self.t = self.t + absolute_scale*self.R.dot(t)
-                self.R = R.dot(self.R)
+
+            # if (absolute_scale > 0.1 and abs(t[2][0]) > abs(t[0][0]) and abs(t[2][0]) > abs(t[1][0])):
+            #     self.t = self.t + absolute_scale*self.R.dot(t)
+            #     self.R = R.dot(self.R)
+
+            self.t = self.t + absolute_scale*self.R.dot(t)
+            self.R = R.dot(self.R)
 
         # Save the total number of good features
         self.n_features = self.good_new.shape[0]
@@ -164,24 +168,26 @@ class MonoVideoOdometery(object):
         self.true_coord = true_vect
         prev_vect = np.array([[x_prev], [y_prev], [z_prev]])
         
-        return np.linalg.norm(true_vect - prev_vect)
+        # return np.linalg.norm(true_vect - prev_vect)
+        return 1
 
 
     def process_frame(self):
         '''Processes images in sequence frame by frame
         '''
-
+        # zfill(6) >> kitti gray odom dataset
+        # zfill(10) >> kitti 360 dataset
         if self.id < 2:
-            self.old_frame = cv2.imread(self.file_path +str().zfill(6)+'.png', 0)
+            self.old_frame = cv2.imread(self.file_path +str().zfill(10)+'.png', 0)
             # cv2.imshow("",self.old_frame)
             # cv2.waitKey(0)
-            self.current_frame = cv2.imread(self.file_path + str(1).zfill(6)+'.png', 0)
+            self.current_frame = cv2.imread(self.file_path + str(1).zfill(10)+'.png', 0)
             # cv2.imshow("",self.old_frame)
             # cv2.waitKey(0)
             self.visual_odometery()
             self.id = 2
         else:
             self.old_frame      = self.current_frame
-            self.current_frame  = cv2.imread(self.file_path + str(self.id).zfill(6)+'.png', 0)
+            self.current_frame  = cv2.imread(self.file_path + str(self.id).zfill(10)+'.png', 0)
             self.visual_odometery()
             self.id             += 1
