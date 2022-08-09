@@ -9,8 +9,8 @@ class MonoVideoOdometery(object):
                 pose_file_path,
                 focal_length = 718.8560,
                 pp = (607.1928, 185.2157), 
-                lk_params=dict(winSize  = (21,21), criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 30, 0.01)), 
-                detector=cv2.FastFeatureDetector_create(threshold=25, nonmaxSuppression=True)):
+                lk_params=dict(winSize  = (21,21), criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 30, 0.01)),
+                detector=cv2.FastFeatureDetector_create(threshold=15, nonmaxSuppression=True)):
         '''
         Arguments:
             img_file_path {str} -- File path that leads to image sequences
@@ -92,9 +92,9 @@ class MonoVideoOdometery(object):
         detection is triggered. 
         '''
 
-        if self.n_features < 2000:
-            self.p0 = self.detect(self.old_frame)
-
+        # if self.n_features < 2000:
+        #     self.p0 = self.detect(self.old_frame)
+        self.p0 = self.detect(self.old_frame)
 
         # Calculate optical flow between frames, st holds status
         # of points from frame to frame
@@ -116,13 +116,17 @@ class MonoVideoOdometery(object):
             _, R, t, _ = cv2.recoverPose(E, self.good_old, self.good_new, self.R.copy(), self.t.copy(), focal=self.focal, pp=self.pp, mask=None)
 
             absolute_scale = self.get_absolute_scale()
-
+            
+            print('t', t)
+            print('R', R)
             # if (absolute_scale > 0.1 and abs(t[2][0]) > abs(t[0][0]) and abs(t[2][0]) > abs(t[1][0])):
             #     self.t = self.t + absolute_scale*self.R.dot(t)
             #     self.R = R.dot(self.R)
 
-            self.t = self.t + absolute_scale*self.R.dot(t)
-            self.R = R.dot(self.R)
+            # if (abs(t[2][0]) > abs(t[0][0]) and abs(t[2][0]) > abs(t[1][0])): #front cam
+            if (abs(t[0][0]) > abs(t[2][0]) and abs(t[0][0]) > abs(t[1][0])): #left cam
+                self.t = self.t + absolute_scale*self.R.dot(t)
+                self.R = R.dot(self.R)
 
         # Save the total number of good features
         self.n_features = self.good_new.shape[0]

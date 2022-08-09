@@ -29,7 +29,7 @@ lk_params   = dict( winSize  = (21,21),
                   criteria = (cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 30, 0.01))
 
 # Create some random colors
-color   = np.random.randint(0,255,(10000,3))
+color   = np.random.randint(0,255,(50000,3))
 
 vo      = MonoVideoOdometery(img_path, pose_path, focal, pp, lk_params)
 trj_h   = 800
@@ -78,7 +78,7 @@ while(vo.hasNextFrame()):
     cv.imshow('mask', mask)
     
     # cv.add(frame, mask)
-    frame = cv.addWeighted(frame, 0.4, mask, 0.6, 0.0)
+    frame = cv.addWeighted(frame, 0.7, mask, 0.3, 0.0)
     cv.imshow('frame', frame)
     k = cv.waitKey(1)
     if k == 27:
@@ -98,11 +98,12 @@ while(vo.hasNextFrame()):
     mono_coord = vo.get_mono_coordinates()
     true_coord = vo.get_true_coordinates()
 
-    print("MSE Error: ", np.linalg.norm(mono_coord - true_coord))
-    print("x: {}, y: {}, z: {}".format(*[str(pt) for pt in mono_coord]))
-    print("true_x: {}, true_y: {}, true_z: {}".format(*[str(pt) for pt in true_coord]))
+    # print("MSE Error: ", np.linalg.norm(mono_coord - true_coord))
+    # print("x: {}, y: {}, z: {}".format(*[str(pt) for pt in mono_coord]))
+    # print("true_x: {}, true_y: {}, true_z: {}".format(*[str(pt) for pt in true_coord]))
 
     euler_angles_0 = (Rotation.from_matrix(vo.R)).as_euler('ZXY', degrees=True)
+
     print("roll : {}, pitch : {}, yaw : {}".format(*[str(pt) for pt in euler_angles_0]))
     print("t_x: {}, t_y: {}, t_z: {}".format(*[str(pt) for pt in mono_coord]))
     print('=====================================================================')
@@ -110,11 +111,13 @@ while(vo.hasNextFrame()):
     draw_x, draw_y, draw_z = [int(round(x)) for x in mono_coord]
     true_x, true_y, true_z = [int(round(x)) for x in true_coord]
 
-    traj = cv.circle(traj, (true_x + 400, true_z + 400), 1, list((0, 0, 255)), 4)
-    traj = cv.circle(traj, (draw_x + 400, draw_z + 400), 1, list((0, 255, 0)), 4)
+    # traj = cv.circle(traj, (true_x + 400, true_z + 400), 1, list((0, 0, 255)), 4) # front cam
 
-    cv.putText(traj, 'Actual Position:', (140, 90), cv.FONT_HERSHEY_SIMPLEX, 0.5,(255,255,255), 1)
-    cv.putText(traj, 'Red', (270, 90), cv.FONT_HERSHEY_SIMPLEX, 0.5,(0, 0, 255), 1)
+    # traj = cv.circle(traj, (draw_x + 400, draw_z + 400), 1, list((0, 255, 0)), 4) # front cam
+    traj = cv.circle(traj, (draw_x + 400, draw_z + 400), 1, list((0, 255, 0)), 4) # left cam
+
+    # cv.putText(traj, 'Actual Position:', (140, 90), cv.FONT_HERSHEY_SIMPLEX, 0.5,(255,255,255), 1)
+    # cv.putText(traj, 'Red', (270, 90), cv.FONT_HERSHEY_SIMPLEX, 0.5,(0, 0, 255), 1)
     cv.putText(traj, 'Estimated Odometry Position:', (30, 120), cv.FONT_HERSHEY_SIMPLEX, 0.5,(255,255,255), 1)
     cv.putText(traj, 'Green', (270, 120), cv.FONT_HERSHEY_SIMPLEX, 0.5,(0, 255, 0), 1)
 
@@ -140,6 +143,6 @@ while(vo.hasNextFrame()):
 
 vid_writer.release()
 
-cv.imwrite("./images/trajectory" + uuid.uuid1().hex + ".png", traj)
+cv.imwrite("./images/trajectory_" + uuid.uuid1().hex + ".png", traj)
 
 cv.destroyAllWindows()
